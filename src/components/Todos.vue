@@ -5,32 +5,32 @@ import type { Schema } from '../../amplify/data/resource';
 import { generateClient } from 'aws-amplify/data';
 
 const client = generateClient<Schema>();
-
-// create a reactive reference to the array of todos
 const todos = ref<Array<Schema['Todo']["type"]>>([]);
+
+function deleteTodo(id: string) {
+  client.models.Todo.delete({ id });
+}
 
 function listTodos() {
   client.models.Todo.observeQuery().subscribe({
-    next: ({ items, isSynced }) => {
-      todos.value = items
-     },
-  }); 
+    next: ({ items }) => {
+      todos.value = items;
+    },
+  });
 }
 
 function createTodo() {
-  client.models.Todo.create({
-    content: window.prompt("Todo content")
-  }).then(() => {
-    // After creating a new todo, update the list of todos
-    listTodos();
-  });
+  const content = window.prompt("Todo content");
+  if (content) {
+    client.models.Todo.create({ content }).then(() => {
+      listTodos();
+    });
+  }
 }
-    
-// fetch todos when the component is mounted
- onMounted(() => {
+
+onMounted(() => {
   listTodos();
 });
-
 </script>
 
 <template>
@@ -40,7 +40,9 @@ function createTodo() {
     <ul>
       <li 
         v-for="todo in todos" 
-        :key="todo.id">
+        :key="todo.id"
+        @click="deleteTodo(todo.id)"
+      >
         {{ todo.content }}
       </li>
     </ul>
